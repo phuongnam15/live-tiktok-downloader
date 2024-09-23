@@ -74,9 +74,34 @@ const Download = () => {
     });
   };
 
-  const handleStartDownload = () => {
-    ipcRenderer.send("start-download", {data : windows});
-  }
+  const handleStart = () => {
+    ipcRenderer.send("start-download", { data: windows });
+    ipcRenderer.on("start-download", (event, data) => {
+      const newWindows = [...windows];
+
+      newWindows[data.index].logs.push(data.msg);
+
+      setWindows(newWindows);
+    });
+  };
+
+  const handleStopProcesses = () => {
+    ipcRenderer.send("stop-processes", { data: 123 });
+    ipcRenderer.on("stop-processes", (event, data) => {
+      console.log(data);
+    });
+  };
+
+  const handleStopProcess = (index) => {
+    ipcRenderer.send("stop-process", { index });
+    ipcRenderer.on("stop-process", (event, data) => {
+      const newWindows = [...windows];
+
+      newWindows[data.index].logs.push(data.msg);
+
+      setWindows(newWindows);
+    });
+  };
 
   useEffect(() => {
     handleGetNumThreads();
@@ -97,7 +122,7 @@ const Download = () => {
       {/* <div>
         <button className="rounded py-1" onClick={() => navigate("/login")}><i className="fa-solid fa-arrow-left text-gray-400 hover:text-gray-600"></i></button>
       </div> */}
-      <div className="mb-4 flex justify-between items-center">
+      <div className="mb-4 flex items-center justify-between">
         <div>
           <label htmlFor="numThreads" className="mr-2">
             Select number of threads:
@@ -123,8 +148,19 @@ const Download = () => {
             ))}
           </select>
         </div>
-        <div>
-          <button className="bg-green-600 text-white font-medium rounded py-2 px-4" onClick={() => handleStartDownload()}>Start</button>
+        <div className="flex gap-2">
+          <button
+            className="rounded bg-red-600 px-4 py-2 font-medium text-white"
+            onClick={() => handleStopProcesses()}
+          >
+            Stop
+          </button>
+          <button
+            className="rounded bg-green-600 px-4 py-2 font-medium text-white"
+            onClick={() => handleStart()}
+          >
+            Start
+          </button>
         </div>
       </div>
 
@@ -147,13 +183,22 @@ const Download = () => {
                 onChange={(e) => handleTiktokInfoChange(index, e.target.value)}
                 className="mb-2 w-full border p-2"
               />
-              <button
-                onClick={() => handleSaveTiktokInfo(index)}
-                disabled={window.isSaved || window.username === ""}
-                className={`px-4 py-2 text-white ${window.isSaved || window.username === "" ? "bg-gray-400" : "bg-blue-500"} rounded`}
-              >
-                Save
-              </button>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => handleSaveTiktokInfo(index)}
+                  disabled={window.isSaved || window.username === ""}
+                  className={`px-3 py-1 text-sm text-white ${window.isSaved || window.username === "" ? "bg-gray-400" : "bg-blue-500"} rounded`}
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => handleStopProcess(index)}
+                  disabled={window.isSaved || window.username === ""}
+                  className={`px-3 py-1 text-sm text-white bg-red-500 rounded`}
+                >
+                  Stop
+                </button>
+              </div>
             </div>
 
             {/* show log */}

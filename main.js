@@ -5,17 +5,11 @@ const sqlite3 = require("sqlite3").verbose();
 const os = require("os");
 
 const {
-  getNumThreads,
-  saveNumThreads,
-  checkConfigTableExist,
-} = require("./models/Thread");
-
-const {
-  saveTiktokInfo,
-  getTiktokInfos,
-  truncateTiktokInfos,
-  checkTiktokInfoTableExist,
-} = require("./models/TiktokInfo");
+  downloadLiveStream,
+  stopFFmpegProcess,
+  stopAllFFmpegProcess,
+  ffmpegProcesses,
+} = require("./controllers/download-live-tiktok/helpers/downloadLiveStream");
 
 require("dotenv").config();
 
@@ -32,7 +26,6 @@ const db = new sqlite3.Database(pathAppDb, async (err) => {
     await checkConfigTableExist();
   }
 });
-
 
 //SETUP WINDOW
 function createWindow() {
@@ -77,10 +70,23 @@ app.on("window-all-closed", () => {
   }
 });
 
-
 //IPC ACTIONS
 ipcMain.on("start-download", async (event, arg) => {
-  console.log(arg);
+  arg.data.forEach((item, index) => {
+    downloadLiveStream(
+      item.username.replace(/\s+/g, ""),
+      "downloads",
+      "mp4",
+      index,
+      event.sender
+    );
+  });
+});
+ipcMain.on("stop-process", async (event, arg) => {
+  stopFFmpegProcess(ffmpegProcesses[arg.index], event.sender, arg.index);
+});
+ipcMain.on("stop-processes", async (event, arg) => {
+  stopAllFFmpegProcess(event.sender);
 });
 ipcMain.on("get-num-threads", async (event, arg) => {
   const threads = await getNumThreads();
@@ -108,7 +114,155 @@ ipcMain.on("get-tiktok-infos", async (event, arg) => {
   event.sender.send("get-tiktok-infos", { data: response });
 });
 
-
-module.exports = {
-  db
+//FUNTIONs
+const getNumThreads = async () => {
+  return new Promise((resolve, reject) => {
+    db.get("SELECT threads FROM config", [], (err, row) => {
+      if (err) {
+        console.error(err.message);
+        reject(err);
+      } else {
+        if (row) {
+          resolve(row.threads);
+        } else {
+          resolve(2);
+        }
+      }
+    });
+  });
+};
+const saveNumThreads = async (threads) => {
+  return new Promise((resolve, reject) => {
+    db.get("SELECT * FROM config", [], (err, row) => {
+      if (err) {
+        console.error(err.message);
+        reject(err);
+      } else {
+        if (row) {
+          db.run(`UPDATE config SET threads = ?`, [threads], (err) => {
+            if (err) {
+              console.error(err.message);
+              reject(err);
+            } else {
+              resolve({ msg: "Updated config successfully" });
+            }
+          });
+        } else {
+          db.run(
+            `INSERT INTO config (threads) VALUES (?)`,
+            [threads],
+            (err) => {
+              if (err) {
+                console.error(err.message);
+                reject(err);
+              } else {
+                resolve({ msg: "Updated config successfully" });
+              }
+            }
+          );
+        }
+      }
+    });
+  });
+};
+const checkConfigTableExist = async () => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      "CREATE TABLE IF NOT EXISTS config (id INTEGER PRIMARY KEY AUTOINCREMENT, threads TEXT)",
+      [],
+      (createErr) => {
+        if (createErr) {
+          console.error(createErr.message);
+          reject();
+        }
+        resolve();
+      }
+    );
+  });
+};
+const saveTiktokInfo = async (username) => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      "SELECT * FROM tiktok_infos WHERE username = ?",
+      [username],
+      (err, row) => {
+        if (err) {
+          console.error(err.message);
+          reject(err);
+        } else {
+          if (row) {
+            resolve({ msg: "User already exist" });
+          } else {
+            db.run(
+              `INSERT INTO tiktok_infos (username) VALUES (?)`,
+              [username],
+              (err) => {
+                if (err) {
+                  console.error(err.message);
+                  reject(err);
+                } else {
+                  resolve({ msg: "New user added successfully" });
+                }
+              }
+            );
+          }
+        }
+      }
+    );
+  });
+};
+const getTiktokInfos = async () => {
+  return new Promise((resolve, reject) => {
+    db.all("SELECT * FROM tiktok_infos", [], (err, rows) => {
+      if (err) {
+        console.error(err.message);
+        reject(err);
+      } else {
+        if (rows && rows.length > 0) {
+          resolve(rows);
+        } else {
+          resolve([]);
+        }
+      }
+    });
+  });
+};
+const truncateTiktokInfos = async () => {
+  return new Promise((resolve, reject) => {
+    db.run("DELETE FROM tiktok_infos", [], (err) => {
+      if (err) {
+        console.error(err.message);
+        reject(err);
+      } else {
+        // Reset the auto-increment ID
+        db.run(
+          "DELETE FROM sqlite_sequence WHERE name='tiktok_infos'",
+          [],
+          (err) => {
+            if (err) {
+              console.error(err.message);
+              reject(err);
+            } else {
+              resolve();
+            }
+          }
+        );
+      }
+    });
+  });
+};
+const checkTiktokInfoTableExist = async () => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      "CREATE TABLE IF NOT EXISTS tiktok_infos (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT)",
+      [],
+      (createErr) => {
+        if (createErr) {
+          console.error(createErr.message);
+          reject();
+        }
+        resolve();
+      }
+    );
+  });
 };
