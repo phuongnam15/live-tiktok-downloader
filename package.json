@@ -11,7 +11,8 @@
   },
   "electronmon": {
     "patterns": [
-      "!**/*.db"
+      "!**/*.db",
+      "!downloads/**/*.mp4"
     ]
   },
   "build": {

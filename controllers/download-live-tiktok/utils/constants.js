@@ -65,7 +65,30 @@ const fileNameOutput = (output, username, format) => {
  * @returns {string} string - The ffmpeg command to download the live stream.
  */
 const ffmpegCommandMP4 = (liveUrl, title, username, fileName) => {
-  return `-i "${liveUrl}" -movflags use_metadata_tags -map_metadata 0 -metadata title="${title}" -metadata artist="${username}" -metadata year="${new Date().getFullYear()}" -c copy "${fileName}" -n -stats -hide_banner -loglevel error`;
+  return [
+    '-i', 
+    liveUrl,
+    '-movflags', 
+    'use_metadata_tags',
+    '-map_metadata', 
+    '0',
+    '-metadata', 
+    `title=${title}`,
+    '-metadata', 
+    `artist=${username}`,
+    '-metadata', 
+    `year=${new Date().getFullYear()}`,
+    '-c', 
+    'copy',
+    '-movflags', 
+    'faststart',
+    fileName,
+    '-n',
+    '-stats',
+    '-hide_banner',
+    '-loglevel', 
+    'error'
+  ];
 };
 
 /**

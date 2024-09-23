@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { spawn } = require('child_process');
+const { spawn } = require("child_process");
 
 const {
   sanitizeUsername,
@@ -17,7 +17,7 @@ const { matchRoomId } = require("./matchRoomId");
 let ffmpegProcesses = [];
 
 async function downloadLiveStream(username, output, format, index, sender) {
-  let ffmpegCommand = "";
+  let ffmpegCommandArgs = [];
   try {
     const acceptedFormats = ["mp4", "mkv"];
     const sanitizedUsername = sanitizeUsername(username);
@@ -27,15 +27,13 @@ async function downloadLiveStream(username, output, format, index, sender) {
     const { url, title, isFlv } = await setStreamData(roomId);
     const fileName = fileNameOutput(output, sanitizedUsername, format);
 
-    console.log(url, title, fileName);
-
     if (acceptedFormats.includes(format) && !isFlv) {
-      ffmpegCommand =
+      ffmpegCommandArgs =
         format === "mp4"
           ? ffmpegCommandMP4(url, title, sanitizedUsername, fileName)
           : ffmpegCommandMKV(url, fileName);
     } else if (format === "mp4" && isFlv) {
-      ffmpegCommand = ffmpegCommandMKV(url, fileName);
+      ffmpegCommandArgs = ffmpegCommandMKV(url, fileName);
     } else {
       throw new Error(
         `\n❌ Invalid format: ${format}. Use mp4 or mkv formats.`
@@ -52,9 +50,8 @@ async function downloadLiveStream(username, output, format, index, sender) {
     sender.send("start-download", { index, msg: error.message });
   }
 
-  const ffmpegArgs = ffmpegCommand.split(" ").filter((arg) => arg.length > 0);
+  const ffmpegProcess = spawn("ffmpeg", ffmpegCommandArgs);
 
-  const ffmpegProcess = spawn("ffmpeg", ffmpegArgs);
 
   ffmpegProcesses.push(ffmpegProcess);
 
@@ -63,13 +60,13 @@ async function downloadLiveStream(username, output, format, index, sender) {
   });
 
   ffmpegProcess.stderr.on("data", (data) => {
-    sender.send("start-download", { index, msg: `stderr: ${data}` });
+    sender.send("start-download", { index, msg: `${data}` });
   });
 
-  ffmpegProcess.on("close", (code) => {
+  ffmpegProcess.on("close", (code, signal) => {
     sender.send("start-download", {
       index,
-      msg: `ffmpeg process exited with code ${code}`,
+      msg: `ffmpeg process exited with code ${code} - signal ${signal}`,
     });
     ffmpegProcesses = ffmpegProcesses.filter((proc) => proc !== ffmpegProcess);
   });
@@ -82,12 +79,12 @@ async function downloadLiveStream(username, output, format, index, sender) {
   });
 }
 
-function stopFFmpegProcess(ffmpegProcess, sender, index) {
-  if (ffmpegProcess) {
-    ffmpegProcess.kill("SIGTERM"); // Gửi tín hiệu SIGTERM để dừng tiến trình
+function stopFFmpegProcess(index, sender) {
+  if (ffmpegProcesses[index]) {
+    ffmpegProcesses[index].kill('SIGINT');
     sender.send("stop-process", {
       index,
-      msg: `Stopped ffmpeg process with PID: ${ffmpegProcess.pid}`,
+      msg: `Stopped ffmpeg process with PID: ${ffmpegProcesses[index].pid}`,
     });
   }
 }
@@ -95,7 +92,7 @@ function stopFFmpegProcess(ffmpegProcess, sender, index) {
 function stopAllFFmpegProcess(sender) {
   for (const ffmpegProcess of ffmpegProcesses) {
     if (ffmpegProcess) {
-      ffmpegProcess.kill("SIGTERM"); // Gửi tín hiệu SIGTERM để dừng tiến trình
+      ffmpegProcess.kill('SIGINT');
       sender.send("stop-processes", {
         msg: `Stopped ffmpeg process with PID: ${ffmpegProcess.pid}`,
       });

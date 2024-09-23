@@ -86,7 +86,7 @@ const Download = () => {
   };
 
   const handleStopProcesses = () => {
-    ipcRenderer.send("stop-processes", { data: 123 });
+    ipcRenderer.send("stop-processes", {});
     ipcRenderer.on("stop-processes", (event, data) => {
       console.log(data);
     });
@@ -95,11 +95,7 @@ const Download = () => {
   const handleStopProcess = (index) => {
     ipcRenderer.send("stop-process", { index });
     ipcRenderer.on("stop-process", (event, data) => {
-      const newWindows = [...windows];
-
-      newWindows[data.index].logs.push(data.msg);
-
-      setWindows(newWindows);
+      console.log(data);
     });
   };
 
@@ -165,7 +161,7 @@ const Download = () => {
       </div>
 
       {/* grid responsive */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4">
         {windows.map((window, index) => (
           <div key={index} className="rounded border p-4 shadow">
             {/* input & button */}

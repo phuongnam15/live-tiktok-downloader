@@ -8,7 +8,6 @@ const {
   downloadLiveStream,
   stopFFmpegProcess,
   stopAllFFmpegProcess,
-  ffmpegProcesses,
 } = require("./controllers/download-live-tiktok/helpers/downloadLiveStream");
 
 require("dotenv").config();
@@ -83,7 +82,7 @@ ipcMain.on("start-download", async (event, arg) => {
   });
 });
 ipcMain.on("stop-process", async (event, arg) => {
-  stopFFmpegProcess(ffmpegProcesses[arg.index], event.sender, arg.index);
+  stopFFmpegProcess(arg.index, event.sender);
 });
 ipcMain.on("stop-processes", async (event, arg) => {
   stopAllFFmpegProcess(event.sender);
@@ -99,7 +98,7 @@ ipcMain.on("save-num-threads", async (event, arg) => {
   } else {
     event.sender.send("save-num-threads", { msg: response });
   }
-  // await truncateTiktokInfos();
+  await truncateTiktokInfos();
 });
 ipcMain.on("save-tiktok-info", async (event, arg) => {
   const response = await saveTiktokInfo(arg.username);
