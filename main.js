@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, ipcMain } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain, shell } = require("electron");
 const url = require("url");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
@@ -71,21 +71,19 @@ app.on("window-all-closed", () => {
 
 //IPC ACTIONS
 ipcMain.on("start-download", async (event, arg) => {
-  arg.data.forEach((item, index) => {
-    downloadLiveStream(
-      item.username.replace(/\s+/g, ""),
+  try {
+    await downloadLiveStream(
+      arg.username,
       "downloads",
       "mp4",
-      index,
       event.sender
     );
-  });
+  } catch (err) {
+    console.error(err);
+  }
 });
 ipcMain.on("stop-process", async (event, arg) => {
-  stopFFmpegProcess(arg.index, event.sender);
-});
-ipcMain.on("stop-processes", async (event, arg) => {
-  stopAllFFmpegProcess(event.sender);
+    process.exit(0);
 });
 ipcMain.on("get-num-threads", async (event, arg) => {
   const threads = await getNumThreads();
