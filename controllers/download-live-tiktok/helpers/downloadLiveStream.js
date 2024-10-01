@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { exec } = require("node:child_process");
+const { spawn } = require("child_process");
 
 const {
   sanitizeUsername,
@@ -14,8 +14,11 @@ const { fetchHTML } = require("./fetchHTML");
 const { setStreamData } = require("./getStreamData");
 const { matchRoomId } = require("./matchRoomId");
 
+var ffmpeg_process;
+
 async function downloadLiveStream(username, output, format, sender) {
-  let ffmpegCommandArgs = "";
+  var ffmpegCommandArgs = [];
+
   try {
     const acceptedFormats = ["mp4", "mkv"];
     const sanitizedUsername = sanitizeUsername(username);
@@ -41,42 +44,51 @@ async function downloadLiveStream(username, output, format, sender) {
     fs.mkdirSync(path.dirname(fileName), { recursive: true });
 
     sender.send("start-download", {
-      msg: `\n✅ Downloading livestream ${title} to ./${fileName}`,
+      msg: `\n✅ Downloading livestream ... ${title} to ./${fileName}`,
+    });
+
+    ffmpeg_process = spawn("ffmpeg", ffmpegCommandArgs);
+
+    ffmpeg_process.on("spawn", () => {
+      sender.send("start-download", {
+        msg: "FFmpeg process start",
+      });
+    });
+
+    ffmpeg_process.stderr.on("data", (data) => {
+      sender.send("start-download", {
+        msg: data.toString(),
+      });
+    });
+
+    ffmpeg_process.on("error", (err) => {
+      sender.send("start-download", {
+        msg: `ERROR:", ${err}`,
+      });
+    });
+
+    ffmpeg_process.on("close", (code) => {
+      sender.send("start-download", { msg : `EXITED WITH CODE ${code}` });
+      if (code == 0) {
+        const dir= path.join(process.cwd());
+        const message = `${dir}/${fileName}}`;
+        sender.send("start-download", { msg : message });
+      }
     });
   } catch (error) {
-    sender.send("start-download", { msg: error.message });
+    sender.send("start-download", { msg: `ERROR: ${error}` });
   }
+}
+function stopFFmpeg() {
+  if (ffmpeg_process && ffmpeg_process.stdin) {
+    ffmpeg_process.stdin.write("q");
+    ffmpeg_process.stdin.end();
 
-  console.log(ffmpegCommandArgs);
-
-  // const proc = exec(
-  //   ffmpegCommandArgs,
-  //   (err, stdout, stderr) => {
-  //     if (err) {
-  //       console.error(`Error: ${err.message}`);
-  //       return;
-  //     }
-  //     if(stdout) {
-  //       console.log(stdout);
-  //     }
-  //     console.log(stderr);
-  //   }
-  // );
-
-  // proc.on("close", (code, signal) => {
-  //   console.log(`Process close with code ${code} signal ${signal}`);
-  // });
-
-  // proc.on("exit", (code, signal) => {
-  //   console.log(`Process exit with code ${code} signal ${signal}`);
-  // });
-
-  // setTimeout(() => {
-  //   console.log("Download is being killed...");
-  //   proc.kill();
-  // }, 20000);
+    ffmpeg_process = null;
+  }
 }
 
 module.exports = {
   downloadLiveStream,
+  stopFFmpeg,
 };

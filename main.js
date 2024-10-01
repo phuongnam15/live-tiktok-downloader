@@ -3,18 +3,13 @@ const url = require("url");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 const os = require("os");
-
 const {
   downloadLiveStream,
-  stopFFmpegProcess,
-  stopAllFFmpegProcess,
+  stopFFmpeg
 } = require("./controllers/download-live-tiktok/helpers/downloadLiveStream");
-
 require("dotenv").config();
-
 const isDev = process.env.NODE_ENV === "development";
 const pathAppDb = isDev ? "./app.db" : path.resolve(__dirname, "..", "app.db");
-
 const db = new sqlite3.Database(pathAppDb, async (err) => {
   if (err) {
     console.error(err.message);
@@ -26,22 +21,22 @@ const db = new sqlite3.Database(pathAppDb, async (err) => {
   }
 });
 
-//SETUP WINDOW
+//SETUP WINDOW -------------------------------------------------------------------------------------------------------------
 function createWindow() {
   mainWindow = new BrowserWindow({
     title: "",
     width: 1200,
     height: 700,
     webPreferences: {
-      contextIsolation: true, //tách biệt mt của renderer và main hoặc preload, tránh tác động từ renderer đến main hoặc preload
-      nodeIntegration: false, //ngăn hoặc cho phép sử dụng require() của nodejs để tải các module, dù là false thì preload.js vần dùng đc require() do khác biệt với các renderer
+      contextIsolation: true,
+      nodeIntegration: false,
       sandbox: false,
       preload: path.join(__dirname, `preload.js`),
     },
   });
 
   const startUrl = isDev
-    ? "http://localhost:3000"
+    ? "http://localhost:3001"
     : `file://${path.join(__dirname, "./ui/build/index.html")}`;
 
   mainWindow.loadURL(startUrl);
@@ -69,7 +64,8 @@ app.on("window-all-closed", () => {
   }
 });
 
-//IPC ACTIONS
+
+//IPC ACTIONS -------------------------------------------------------------------------------------------------------------
 ipcMain.on("start-download", async (event, arg) => {
   try {
     await downloadLiveStream(
@@ -79,11 +75,11 @@ ipcMain.on("start-download", async (event, arg) => {
       event.sender
     );
   } catch (err) {
-    console.error(err);
+    event.sender.send("start-download", { msg : err })
   }
 });
 ipcMain.on("stop-process", async (event, arg) => {
-    process.exit(0);
+  stopFFmpeg();
 });
 ipcMain.on("get-num-threads", async (event, arg) => {
   const threads = await getNumThreads();
@@ -111,7 +107,8 @@ ipcMain.on("get-tiktok-infos", async (event, arg) => {
   event.sender.send("get-tiktok-infos", { data: response });
 });
 
-//FUNTIONs
+
+//FUNTIONs -------------------------------------------------------------------------------------------------------------
 const getNumThreads = async () => {
   return new Promise((resolve, reject) => {
     db.get("SELECT threads FROM config", [], (err, row) => {

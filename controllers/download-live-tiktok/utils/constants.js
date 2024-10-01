@@ -65,7 +65,19 @@ const fileNameOutput = (output, username, format) => {
  * @returns {string} string - The ffmpeg command to download the live stream.
  */
 const ffmpegCommandMP4 = (liveUrl, title, username, fileName) => {
-  return `ffmpeg -i "${liveUrl}" -movflags use_metadata_tags -map_metadata 0 -metadata title="${title}" -metadata artist="${username}" -metadata year="${new Date().getFullYear()}" -c copy "${fileName}" -n -stats -hide_banner -loglevel error`;
+  return [
+    "-i",
+    liveUrl,
+    "-c",
+    "copy",
+    "-metadata",
+    `title=${title}`,
+    "-metadata",
+    `artist=${username}`,
+    "-metadata",
+    `year=${new Date().getFullYear()}`,
+    fileName,
+  ];
 };
 
 /**
@@ -76,7 +88,22 @@ const ffmpegCommandMP4 = (liveUrl, title, username, fileName) => {
  * @returns {string} string - The ffmpeg command to download the live stream.
  */
 const ffmpegCommandMKV = (liveUrl, fileName) => {
-  return `ffmpeg -i "${liveUrl}" -c:v hevc -crf 23 -c:a copy "${fileName}" -n -stats -hide_banner -loglevel error`;
+  return [
+    "-i",
+    liveUrl,
+    "-c:v",
+    "hevc",
+    "-crf",
+    "23",
+    "-c:a",
+    "copy",
+    fileName,
+    "-n",
+    "-stats",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+  ];
 };
 
 module.exports = {
