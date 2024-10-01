@@ -37,7 +37,7 @@ function createWindow() {
   });
 
   const startUrl = isDev
-    ? "http://localhost:3001"
+    ? "http://localhost:3000"
     : `file://${path.join(__dirname, "./ui/build/index.html")}`;
 
   mainWindow.loadURL(startUrl);
@@ -82,14 +82,24 @@ ipcMain.on("start-download", async (event, arg) => {
 ipcMain.on("stop-process", async (event, arg) => {
   stopFFmpeg();
 });
-ipcMain.on("up-live", async (event, arg) => {
-  const response = await MainController.liveVideo(arg.key_live, arg.videoPath);
-  event.sender.send("up-live", { msg : response });
+ipcMain.on("up-live-multi", async (event, { streams }) => {
+  if (!Array.isArray(streams) || streams.length === 0) {
+    event.sender.send("up-live-multi-response", { data: [{ status: "error", msg: "Invalid stream IDs" }] });
+    return;
+  }
+  const response = await MainController.startMultipleStreams(streams);
+  event.sender.send("up-live-multi-response", { data : response.data });
 })
-ipcMain.on("stop-live", async (event, arg) => {
-  const response = await MainController.stopLiveVideoToken(arg.streamId);
-  event.sender.send("stop-live", { msg : response });
-})
+ipcMain.on("stop-live-multi", async (event, { streamIds }) => {
+  if (!Array.isArray(streamIds) || streamIds.length === 0) {
+    event.sender.send("stop-live-multi-response", { data: [{ status: "error", msg: "Invalid stream IDs" }] });
+    return;
+  }
+
+  const response = await MainController.stopMultipleStreams(streamIds);
+  event.sender.send("stop-live-multi-response", { data: response.data });
+});
+
 ipcMain.on("get-num-threads", async (event, arg) => {
   const threads = await getNumThreads();
   event.sender.send("get-num-threads", { threads: threads });

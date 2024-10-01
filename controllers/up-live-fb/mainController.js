@@ -206,16 +206,12 @@ class MainController {
     }
   }
 
-  static async startMultipleStreams(req, res) {
-    const { streams } = req.body;
-    if (!Array.isArray(streams) || streams.length === 0) {
-      return res.status(400).json({ error: "Invalid streams data" });
-    }
+  static async startMultipleStreams(streams) {
 
     const results = [];
     for (const stream of streams) {
       try {
-        const { url, key_live, videoPath } = stream;
+        const { url = "rtmps://live-api-s.facebook.com:443/rtmp/", key_live, videoPath } = stream;
         const streamId =
           Date.now().toString() + Math.random().toString(36).substr(2, 5);
         const rtmpUrl = `${url}/${key_live}`;
@@ -224,7 +220,7 @@ class MainController {
           results.push({
             streamId,
             status: "error",
-            message: "Video file not found",
+            msg: "Video file not found",
           });
           continue;
         }
@@ -277,23 +273,22 @@ class MainController {
         results.push({
           streamId,
           status: "success",
-          message: "Live stream started",
+          msg: "Live stream started",
         });
       } catch (error) {
         console.error("Error starting stream:", error);
-        results.push({ status: "error", message: error.message });
+        results.push({ status: "error", msg: error.message });
       }
     }
 
-    res.json({ results });
+    return {
+      code: 200,
+      data: results
+    }
   }
 
-  static async stopMultipleStreams(req, res) {
-    const { streamIds } = req.body;
-    if (!Array.isArray(streamIds) || streamIds.length === 0) {
-      return res.status(400).json({ error: "Invalid stream IDs" });
-    }
-
+  static async stopMultipleStreams(streamIds) {
+    
     const results = [];
     for (const streamId of streamIds) {
       try {
@@ -318,22 +313,25 @@ class MainController {
           results.push({
             streamId,
             status: "success",
-            message: "Live stream stopped",
+            msg: "Live stream stopped",
           });
         } else {
           results.push({
             streamId,
             status: "error",
-            message: "No active live stream found with this ID",
+            msg: "No active live stream found with this ID",
           });
         }
       } catch (error) {
         console.error(`Error stopping stream ${streamId}:`, error);
-        results.push({ streamId, status: "error", message: error.message });
+        results.push({ streamId, status: "error", msg: error.message });
       }
     }
 
-    res.json({ results });
+    return {
+      code: 200,
+      data: results
+    }
   }
 }
 
