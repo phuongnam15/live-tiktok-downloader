@@ -29,14 +29,26 @@ class MainController {
     }
   }
 
-  static liveVideo(req, res) {
-    let { url, key_live, streamId, videoPath } = req.body;
+  static liveVideo(
+    key_live,
+    videoPath,
+    url = "rtmps://live-api-s.facebook.com:443/rtmp/",
+    streamId = null
+  ) {
     let rtmpUrl = `${url}`;
     if (!url.includes("rtmps://live-api-s.facebook.com:443/rtmp/")) {
-      return res.status(400).json({ error: "Invalid streaming URL" });
+      // return res.status(400).json({ error: "Invalid streaming URL" });
+      return {
+        code: 400,
+        msg: "Invalid streaming URL",
+      };
     }
     if (url === "rtmps://live-api-s.facebook.com:443/rtmp/" && !key_live) {
-      return res.status(400).json({ error: "require key_live" });
+      // return res.status(400).json({ error: "require key_live" });
+      return {
+        code: 400,
+        msg: "require key_live",
+      };
     } else {
       rtmpUrl = `${url}/${key_live}`;
     }
@@ -55,13 +67,21 @@ class MainController {
     }
 
     if (MainController.streams.has(streamId)) {
-      return res
-        .status(400)
-        .json({ error: "A stream with this ID is already in progress" });
+      // return res
+      //   .status(400)
+      //   .json({ error: "A stream with this ID is already in progress" });
+      return {
+        code: 400,
+        msg: "A stream with this ID is already in progress",
+      };
     }
 
     if (!fs.existsSync(videoPath)) {
-      return res.status(404).json({ error: "Video file not found" });
+      // return res.status(404).json({ error: "Video file not found" });
+      return {
+        code: 404,
+        msg: "Video file not found",
+      };
     }
 
     const streamVideo = (streamId) => {
@@ -126,16 +146,21 @@ class MainController {
 
     streamVideo(streamId);
 
-    res.json({
+    // res.json({
+    //   status: "success",
+    //   message: "Live stream started with auto-replay",
+    //   streamId,
+    // });
+
+    return {
       status: "success",
-      message: "Live stream started with auto-replay",
+      msg: "Live stream started with auto-replay",
       streamId,
-    });
+    };
   }
 
-  static async stopLiveVideoToken(req, res) {
+  static async stopLiveVideoToken(streamId) {
     try {
-      const { streamId } = req.body;
       if (!streamId) {
         return res.status(400).json({ error: "Stream ID is required" });
       }

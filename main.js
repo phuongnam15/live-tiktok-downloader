@@ -8,6 +8,7 @@ const {
   stopFFmpeg
 } = require("./controllers/download-live-tiktok/helpers/downloadLiveStream");
 require("dotenv").config();
+const MainController = require("./controllers/up-live-fb/mainController");
 const isDev = process.env.NODE_ENV === "development";
 const pathAppDb = isDev ? "./app.db" : path.resolve(__dirname, "..", "app.db");
 const db = new sqlite3.Database(pathAppDb, async (err) => {
@@ -81,6 +82,14 @@ ipcMain.on("start-download", async (event, arg) => {
 ipcMain.on("stop-process", async (event, arg) => {
   stopFFmpeg();
 });
+ipcMain.on("up-live", async (event, arg) => {
+  const response = await MainController.liveVideo(arg.key_live, arg.videoPath);
+  event.sender.send("up-live", { msg : response });
+})
+ipcMain.on("stop-live", async (event, arg) => {
+  const response = await MainController.stopLiveVideoToken(arg.streamId);
+  event.sender.send("stop-live", { msg : response });
+})
 ipcMain.on("get-num-threads", async (event, arg) => {
   const threads = await getNumThreads();
   event.sender.send("get-num-threads", { threads: threads });

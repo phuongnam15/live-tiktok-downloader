@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import notifyContext from "../contexts/notifyContext";
 import { useNavigate } from "react-router-dom";
 
@@ -8,6 +8,7 @@ const Download = () => {
   const [logs, setLogs] = useState([]);
   const { show } = useContext(notifyContext);
   const navigate = useNavigate();
+  const logsEndRef = useRef(null);
 
   const handleTiktokInfoChange = (value) => {
     setUsername(value);
@@ -37,11 +38,15 @@ const Download = () => {
   };
 
   useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
+  useEffect(() => {
     handleGetTiktokInfo();
   }, []);
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto h-screen p-4">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex gap-2">
           <button
@@ -57,6 +62,7 @@ const Download = () => {
             Start
           </button>
         </div>
+        <button className="bg-blue-500 text-white rounded py-2 px-4 text-md" onClick={() => navigate("/up-live")}>Up Live</button>
       </div>
 
       <div className="rounded border p-4 shadow">
@@ -75,7 +81,7 @@ const Download = () => {
         </div>
 
         {/* show logs */}
-        <div className="h-40 overflow-auto bg-gray-100 p-2">
+        <div className="h-96 overflow-y-auto bg-gray-100 p-2">
           <h3 className="mb-2 font-bold">Logs:</h3>
           {logs.length > 0 ? (
             <ul>
@@ -84,6 +90,7 @@ const Download = () => {
                   {log}
                 </li>
               ))}
+              <div ref={logsEndRef} />
             </ul>
           ) : (
             <p className="text-sm text-gray-500">No logs yet.</p>

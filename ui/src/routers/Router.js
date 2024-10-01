@@ -1,17 +1,17 @@
 import { lazy } from "react";
 
 const Download = lazy(() => import("../pages/Download"));
-// const Login = lazy(() => import("../pages/auth/Login"));
+const UpLive = lazy(() => import("../pages/UpLive"));
 
 const Router = [
   {
     path: "/",
     element: <Download />,
   },
-  // {
-  //   path: "/login",
-  //   element: <Login />,
-  // },
+  {
+    path: "/up-live",
+    element: <UpLive />,
+  },
 ];
 
 export default Router;
