@@ -277,7 +277,7 @@ class MainController {
         });
       } catch (error) {
         console.error("Error starting stream:", error);
-        results.push({ status: "error", msg: error.message });
+        results.push({ streamId, status: "error", msg: error.message });
       }
     }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const UpLive = () => {
@@ -8,8 +8,7 @@ const UpLive = () => {
   const [liveStreams, setLiveStreams] = useState([
     { key_live: "", file: null },
   ]);
-  const [responseMsg, setResponseMsg] = useState([]);
-  const [runningStreams, setRunningStreams] = useState([]);
+  const [responseData, setResponseData] = useState([]);
 
   const handleNumWindowsChange = (e) => {
     const newNumWindows = parseInt(e.target.value, 10);
@@ -38,6 +37,13 @@ const UpLive = () => {
     setLiveStreams(updatedStreams);
   };
 
+  const handleStopAll = () => {
+    const successStreamIds = responseData
+      .filter((item) => item.status === "success")
+      .map((item) => item.streamId);
+    handleStop(successStreamIds);
+  };
+
   const handleUpload = () => {
     const streamsToUpload = liveStreams.filter(
       (stream) => stream.key_live && stream.file,
@@ -55,36 +61,25 @@ const UpLive = () => {
       videoPath: stream.file.path,
     }));
 
-    ipcRenderer.send("up-live-multi", { streams : uploadData });
+    ipcRenderer.send("up-live-multi", { streams: uploadData });
     ipcRenderer.once("up-live-multi-response", (event, { data }) => {
-      const updatedStreams = liveStreams.map((stream, index) => {
-        const streamResult = data.find(
-          (item) => item.msg.includes("started") && item.streamId,
-        );
-        if (streamResult) {
-          return {
-            ...stream,
-            streamId: streamResult.streamId,
-            status: "running",
-          };
-        }
-        return { ...stream, status: "error" };
-      });
-      setLiveStreams(updatedStreams);
-      setResponseMsg(data.map((item) => item.msg));
+      setResponseData(data);
     });
   };
 
   const handleStop = (streamIds) => {
     ipcRenderer.send("stop-live-multi", { streamIds });
     ipcRenderer.once("stop-live-multi-response", (event, { data }) => {
-      const updatedStreams = liveStreams.map((stream) =>
-        streamIds.includes(stream.streamId)
-          ? { ...stream, status: "stopped" }
-          : stream,
+      setResponseData((prevResponseData) =>
+        prevResponseData.map((item) => {
+          const matchingData = data.find(
+            (dataItem) => dataItem.streamId === item.streamId,
+          );
+          return matchingData
+            ? { ...item, status: "stopped", msg: matchingData.msg }
+            : item;
+        }),
       );
-      setLiveStreams(updatedStreams);
-      setResponseMsg((prev) => [...prev, ...data.map((item) => item.msg)]);
     });
   };
 
@@ -116,6 +111,12 @@ const UpLive = () => {
           Upload
         </button>
         <button
+          className="rounded bg-red-500 px-3 py-2 text-white"
+          onClick={handleStopAll}
+        >
+          Stop All
+        </button>
+        <button
           className="rounded bg-teal-500 px-3 py-2 text-white"
           onClick={() => navigate("/")}
         >
@@ -123,13 +124,13 @@ const UpLive = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
         {liveStreams.map((stream, index) => (
-          <div key={index} className="rounded border p-2 shadow">
+          <div key={index} className="rounded border p-2 border-gray-400">
             <div className="mb-2">
               <label
                 htmlFor={`keyLive-${index}`}
-                className="mb-2 block text-sm font-medium"
+                className="mb-2 block text-sm font-bold"
               >
                 Key Live {index + 1}
               </label>
@@ -138,7 +139,7 @@ const UpLive = () => {
                 id={`keyLive-${index}`}
                 value={stream.key_live}
                 onChange={(e) => handleKeyLiveChange(index, e.target.value)}
-                className="w-full rounded border p-2 text-sm"
+                className="w-full rounded border p-2 text-sm border-gray-400"
                 placeholder={`Enter your key live for window ${index + 1}`}
               />
             </div>
@@ -146,7 +147,7 @@ const UpLive = () => {
             <div className="mb-2">
               <label
                 htmlFor={`fileUpload-${index}`}
-                className="mb-2 block text-sm font-medium"
+                className="mb-2 block text-sm font-bold"
               >
                 Select File {index + 1}
               </label>
@@ -154,34 +155,24 @@ const UpLive = () => {
                 type="file"
                 id={`fileUpload-${index}`}
                 onChange={(e) => handleFileChange(index, e.target.files[0])}
-                className="w-full rounded border p-2"
+                className="w-full rounded border p-2 border-gray-400"
               />
             </div>
 
-            {stream.status === "running" && (
-              <button
-                onClick={() => handleStop([stream.streamId])}
-                className="mt-2 rounded bg-red-600 px-3 py-1 text-white"
-              >
-                Stop
-              </button>
-            )}
+            {responseData.length > 0 &&
+              (responseData[index]?.status === "success" ? (
+                <button
+                  onClick={() => handleStop([responseData[index].streamId])}
+                  className="mt-2 rounded bg-red-600 px-3 py-1 text-white"
+                >
+                  Stop
+                </button>
+              ) : (
+                <span>{responseData[index]?.msg}</span>
+              ))}
           </div>
         ))}
       </div>
-
-      {responseMsg.length > 0 && (
-        <div className="mt-4 rounded border bg-gray-50 p-4">
-          <h3 className="mb-2 text-lg font-medium">Response Messages</h3>
-          <ul>
-            {responseMsg.map((msg, index) => (
-              <li key={index} className="text-sm text-gray-600">
-                {msg}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 };
