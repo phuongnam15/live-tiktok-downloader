@@ -6,9 +6,14 @@ const { webcastTiktokApi } = require("../utils/constants");
  * @param {string} roomId - The room ID of the live stream.
  * @return {Promise} - The response from the tiktok api.
  */
-async function getWebCastTikTokApiResponse(roomId) {
+async function getWebCastTikTokApiResponse(roomId, cookie) {
   const api = webcastTiktokApi(roomId);
-  const response = await fetch(api);
+  const response = await fetch(api, {
+    headers: {
+      'Content-Type' : 'application/json',
+      'cookie' : cookie
+    }
+  });
   const data = await response.json();
 
   const tiktokResponse = {

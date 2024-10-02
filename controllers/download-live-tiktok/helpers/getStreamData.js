@@ -3,12 +3,12 @@ const {
   getWebCastTikTokApiResponse,
 } = require("../api/getWebCastTikTokApiResponse");
 
-async function setStreamData(roomId) {
+async function setStreamData(roomId, cookie) {
   const onlineStatus = 2;
   const { liveUrl, liveTitle, liveUser, liveStatus } =
     await getM3u8LiveStreamInfo(roomId);
   const { streamUrlFlv, streamTitleFlv, usernameFlv, statusFlv } =
-    await getFlvLiveStreamInfo(roomId);
+    await getFlvLiveStreamInfo(roomId, cookie);
 
   if (liveUrl === "" && streamUrlFlv === "") {
     throw new Error(
@@ -53,8 +53,8 @@ async function getM3u8LiveStreamInfo(roomId) {
   return liveStreamInfo;
 }
 
-async function getFlvLiveStreamInfo(roomId) {
-  const response = await getWebCastTikTokApiResponse(roomId);
+async function getFlvLiveStreamInfo(roomId, cookie) {
+  const response = await getWebCastTikTokApiResponse(roomId, cookie);
   const flvStreamInfo = {
     streamUrlFlv: response.data.stream_url.flv_pull_url.FULL_HD1,
     streamTitleFlv: response.data.title,

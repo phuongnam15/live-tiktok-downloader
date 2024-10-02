@@ -73,7 +73,8 @@ ipcMain.on("start-download", async (event, arg) => {
       arg.username,
       "downloads",
       "mp4",
-      event.sender
+      event.sender,
+      arg.cookie
     );
   } catch (err) {
     event.sender.send("start-download", { msg : err })

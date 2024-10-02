@@ -16,7 +16,7 @@ const { matchRoomId } = require("./matchRoomId");
 
 var ffmpeg_process;
 
-async function downloadLiveStream(username, output, format, sender) {
+async function downloadLiveStream(username, output, format, sender, cookie) {
   var ffmpegCommandArgs = [];
 
   try {
@@ -25,7 +25,7 @@ async function downloadLiveStream(username, output, format, sender) {
     const liveUri = newLiveUrl(sanitizedUsername);
     const textHTML = await fetchHTML(liveUri);
     const roomId = matchRoomId(textHTML);
-    const { url, title, isFlv } = await setStreamData(roomId);
+    const { url, title, isFlv } = await setStreamData(roomId, cookie);
     const fileName = fileNameOutput(output, sanitizedUsername, format);
 
     if (acceptedFormats.includes(format) && !isFlv) {

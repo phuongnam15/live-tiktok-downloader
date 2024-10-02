@@ -1,21 +1,23 @@
-import React, { useEffect, useState, useContext, useRef } from "react";
-import notifyContext from "../contexts/notifyContext";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Download = () => {
   const ipcRenderer = window.ipcRenderer;
   const [username, setUsername] = useState("");
   const [logs, setLogs] = useState([]);
-  const { show } = useContext(notifyContext);
   const navigate = useNavigate();
   const logsEndRef = useRef(null);
+  const [cookie, setCookie] = useState("");
 
   const handleTiktokInfoChange = (value) => {
     setUsername(value);
   };
+  const handleCookieChange = (value) => {
+    setCookie(value);
+  };
 
   const handleStart = () => {
-    ipcRenderer.send("start-download", { username });
+    ipcRenderer.send("start-download", { username, cookie });
     ipcRenderer.on("start-download", (event, data) => {
       setLogs((prevLogs) => [...prevLogs, data.msg]);
     });
@@ -53,6 +55,20 @@ const Download = () => {
       </div>
 
       <div className="rounded border p-4 shadow">
+        {/* input for cookie */}
+        <div className="mb-4">
+          <label htmlFor="cookie" className="mb-2 block font-bold">
+            Cookie
+          </label>
+          <input
+            type="text"
+            id="cookie"
+            value={cookie}
+            onChange={(e) => handleCookieChange(e.target.value)}
+            className="mb-2 w-full border p-2"
+          />
+        </div>
+
         {/* input for username */}
         <div className="mb-4">
           <label htmlFor="username" className="mb-2 block font-bold">
