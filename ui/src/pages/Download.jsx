@@ -14,15 +14,6 @@ const Download = () => {
     setUsername(value);
   };
 
-  const handleGetTiktokInfo = () => {
-    ipcRenderer.send("get-tiktok-info", {});
-    ipcRenderer.on("get-tiktok-info", (event, data) => {
-      if (data.username) {
-        setUsername(data.username);
-      }
-    });
-  };
-
   const handleStart = () => {
     ipcRenderer.send("start-download", { username });
     ipcRenderer.on("start-download", (event, data) => {
@@ -40,10 +31,6 @@ const Download = () => {
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
-
-  useEffect(() => {
-    handleGetTiktokInfo();
-  }, []);
 
   return (
     <div className="container mx-auto h-screen p-4">

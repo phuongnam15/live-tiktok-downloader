@@ -116,7 +116,7 @@ class MainController {
           console.error("FFmpeg stderr:", stderr);
           if (
             MainController.streams.has(streamId) &&
-            !MainController.streams.get(streamId).stopping
+            !MainController.streams.get(streamId).isStopped
           ) {
             console.log(`Restarting stream ${streamId} due to error...`);
             setTimeout(() => streamVideo(streamId), 5000);
@@ -126,7 +126,7 @@ class MainController {
           console.log(`Stream ${streamId} ended`);
           if (
             MainController.streams.has(streamId) &&
-            !MainController.streams.get(streamId).stopping
+            !MainController.streams.get(streamId).isStopped
           ) {
             console.log(`Restarting stream ${streamId}...`);
             setTimeout(() => streamVideo(streamId), 1000);
@@ -140,7 +140,7 @@ class MainController {
         command: ffmpegCommand,
         url: rtmpUrl,
         videoPath,
-        stopping: false,
+        isStopped: false,
       });
     };
 
@@ -167,7 +167,7 @@ class MainController {
 
       if (MainController.streams.has(streamId)) {
         const streamData = MainController.streams.get(streamId);
-        streamData.stopping = true;
+        streamData.isStopped = true;
         const { command } = streamData;
 
         command.kill("SIGINT");
@@ -249,16 +249,16 @@ class MainController {
             })
             .on("error", (err) => {
               console.error(`Error in stream ${streamId}:`, err);
-              if (MainController.streams.has(streamId)) {
-                console.log(`Restarting stream ${streamId} due to error...`);
-                setTimeout(() => streamVideo(streamId), 5000);
-              }
+              // if (MainController.streams.has(streamId)) {
+              //   console.log(`Restarting stream ${streamId} due to error...`);
+              //   setTimeout(() => streamVideo(streamId), 5000);
+              // }
             })
             .on("end", () => {
               console.log(`Stream ${streamId} ended, restarting...`);
-              if (MainController.streams.has(streamId)) {
-                setTimeout(() => streamVideo(streamId), 1000);
-              }
+              // if (MainController.streams.has(streamId)) {
+              //   setTimeout(() => streamVideo(streamId), 1000);
+              // }
             });
 
           ffmpegCommand.save(rtmpUrl);
