@@ -87,7 +87,7 @@ const UpLive = () => {
   };
 
   return (
-    <div className="mx-auto flex h-screen flex-col px-8 py-4 dark:bg-gray-900 dark:text-white">
+    <div className="mx-auto flex min-h-screen h-fit flex-col px-8 py-4 dark:bg-gray-900 dark:text-white">
       {/* Section for number of windows selection */}
       <div className="mb-4 flex items-center gap-3">
         <select

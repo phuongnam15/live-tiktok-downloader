@@ -42,7 +42,7 @@ function createWindow() {
 
   mainWindow.loadURL(startUrl);
 
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   Menu.setApplicationMenu(null);
 }
