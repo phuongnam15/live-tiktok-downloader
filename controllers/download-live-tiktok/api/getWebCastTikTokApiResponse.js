@@ -1,4 +1,4 @@
-const { webcastTiktokApi } = require("../utils/constants");
+const { webcastTiktokApi, userAgent } = require("../utils/constants");
 
 /**
  * It takes a roomId, makes a request to the tiktok api, and returns the response.
@@ -10,8 +10,8 @@ async function getWebCastTikTokApiResponse(roomId, cookie) {
   const api = webcastTiktokApi(roomId);
   const response = await fetch(api, {
     headers: {
-      'Content-Type' : 'application/json',
-      'cookie' : cookie
+      'cookie' : cookie,
+      'User-Agent': userAgent,
     }
   });
   const data = await response.json();

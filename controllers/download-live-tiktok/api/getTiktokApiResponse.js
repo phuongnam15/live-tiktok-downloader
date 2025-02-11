@@ -1,4 +1,4 @@
-const { tiktokApi } = require("../utils/constants");
+const { tiktokApi, userAgent } = require("../utils/constants");
 
 /**
  * It takes a roomId, makes a request to the tiktok api, and returns the response.
@@ -6,9 +6,14 @@ const { tiktokApi } = require("../utils/constants");
  * @param {string} roomId - The room ID of the live stream.
  * @return {Promise} - The response from the tiktok api.
  */
-async function getTiktokApiResponse(roomId) {
+async function getTiktokApiResponse(roomId, cookie) {
   const api = tiktokApi(roomId);
-  const response = await fetch(api);
+  const response = await fetch(api, {
+    headers: {
+      cookie: cookie,
+      "User-Agent": userAgent,
+    },
+  });
   const data = await response.json();
 
   const tiktokResponse = {
@@ -23,4 +28,4 @@ async function getTiktokApiResponse(roomId) {
   return tiktokResponse;
 }
 
-module.exports = {getTiktokApiResponse}
+module.exports = { getTiktokApiResponse };

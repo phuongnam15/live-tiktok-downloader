@@ -6,7 +6,7 @@ const {
 async function setStreamData(roomId, cookie) {
   const onlineStatus = 2;
   const { liveUrl, liveTitle, liveUser, liveStatus } =
-    await getM3u8LiveStreamInfo(roomId);
+    await getM3u8LiveStreamInfo(roomId, cookie);
   const { streamUrlFlv, streamTitleFlv, usernameFlv, statusFlv } =
     await getFlvLiveStreamInfo(roomId, cookie);
 
@@ -41,8 +41,8 @@ async function setStreamData(roomId, cookie) {
   }
 }
 
-async function getM3u8LiveStreamInfo(roomId) {
-  const response = await getTiktokApiResponse(roomId);
+async function getM3u8LiveStreamInfo(roomId, cookie) {
+  const response = await getTiktokApiResponse(roomId, cookie);
   const liveStreamInfo = {
     liveUrl: response.LiveRoomInfo.liveUrl,
     liveTitle: response.LiveRoomInfo.title,

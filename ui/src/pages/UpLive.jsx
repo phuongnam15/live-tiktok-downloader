@@ -96,7 +96,7 @@ const UpLive = () => {
           onChange={handleNumWindowsChange}
           className="rounded border p-1 outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
         >
-          {Array.from({ length: 10 }, (_, i) => (
+          {Array.from({ length: 20 }, (_, i) => (
             <option key={i + 1} value={i + 1}>
               {i + 1}
             </option>
